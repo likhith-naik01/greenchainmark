@@ -367,4 +367,5 @@ For support and questions:
 
 - **v1.0.0** - Initial MVP release with Web3 integration and AI analysis
 - **v0.9.0** - Beta release with smart contract deployment
-- **v0.8.0** - Alpha release with basic functionality
+- **v0.8.0** - Alpha release with basic functionality#   g r e e n c h a i n m a r k  
+ 
