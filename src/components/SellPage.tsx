@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { compressImage } from '../utils/imageUtils';
 import { Upload } from 'lucide-react';
 
 interface SellPageProps {
@@ -26,6 +27,19 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
     images: []
   });
   const [dragActive, setDragActive] = useState<boolean>(false);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (formData.images.length === 0) {
+      setPreviewUrls([]);
+      return;
+    }
+    const urls = formData.images.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [formData.images]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     setFormData({
@@ -68,14 +82,34 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
     }
   };
 
-  const handleSubmit = (): void => {
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmit = async (): Promise<void> => {
     if (!formData.name || !formData.price || !formData.quantity || !formData.farmer || !formData.location || !formData.description) {
       alert('Please fill all required fields');
       return;
     }
 
-    // Build a product record to persist
-    const imageUrls = formData.images.map(f => URL.createObjectURL(f));
+    // Compress and convert images to persistent data URLs for storage
+    const imageUrls = await Promise.all(
+      formData.images.map(async (file) => {
+        try {
+          const compressed = await compressImage(file, 1000);
+          const url = await fileToDataUrl(compressed);
+          return url;
+        } catch (err) {
+          // Fallback to original file if compression fails
+          return await fileToDataUrl(file);
+        }
+      })
+    );
     const newListing = {
       id: Date.now(),
       name: formData.name,
@@ -173,11 +207,11 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
               >
                 Choose File
               </label>
-              {formData.images.length > 0 && (
+              {previewUrls.length > 0 && (
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  {formData.images.slice(0, 6).map((file, idx) => (
-                    <div key={idx} className="w-full h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center text-xs text-gray-600 px-1">
-                      {file.name}
+                  {previewUrls.slice(0, 6).map((url, idx) => (
+                    <div key={idx} className="relative w-full h-20 bg-gray-100 rounded overflow-hidden">
+                      <img src={url} alt={`preview-${idx}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

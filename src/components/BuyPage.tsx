@@ -265,9 +265,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack, onHome
           <div className="flex flex-col lg:flex-row">
             {/* Left Side - Image */}
             <div className="lg:w-1/2">
-              <div className="h-96 lg:h-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center text-8xl">
-                🌾
-              </div>
+              {product.image ? (
+                <div className="h-96 lg:h-full bg-gray-100 flex items-center justify-center">
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              ) : (
+                <div className="h-96 lg:h-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center text-8xl">
+                  🌾
+                </div>
+              )}
             </div>
             
             {/* Right Side - Details */}
@@ -385,7 +391,7 @@ const BuyPage: React.FC<BuyPageProps> = ({ onNavigateHome, web3, account }) => {
           name: p.name,
           price: Number(p.price),
           quantity: p.quantity,
-          image: p.image,
+          image: p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : ''),
           farmer: p.farmer,
           farmerAddress: p.farmerAddress || '0x0000000000000000000000000000000000000000',
           location: p.location,
@@ -443,9 +449,11 @@ const BuyPage: React.FC<BuyPageProps> = ({ onNavigateHome, web3, account }) => {
               onClick={() => setSelectedProduct(product)}
             >
               <div className="h-48 bg-gray-200 relative">
-                <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                  🌾
-                </div>
+                {product.image ? (
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-4xl">🌾</div>
+                )}
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h3>
