@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Star, MapPin, User, Send, X } from 'lucide-react';
+import { BuyConfirmationModal } from './BuyConfirmationModal';
+import Web3 from 'web3';
 
 interface Product {
   id: number;
@@ -8,6 +10,7 @@ interface Product {
   quantity: string;
   image: string;
   farmer: string;
+  farmerAddress: string;
   location: string;
   rating: number;
   description: string;
@@ -15,6 +18,8 @@ interface Product {
 
 interface BuyPageProps {
   onNavigateHome: () => void;
+  web3?: Web3;
+  account?: string;
 }
 
 interface ContactFarmerModalProps {
@@ -27,6 +32,8 @@ interface ProductDetailsProps {
   product: Product;
   onBack: () => void;
   onHome: () => void;
+  web3?: Web3;
+  account?: string;
 }
 
 interface ChatMessage {
@@ -45,6 +52,7 @@ const sampleProducts: Product[] = [
     quantity: "100 kg",
     image: "/api/placeholder/300/200",
     farmer: "John Doe",
+    farmerAddress: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
     location: "Karnataka, India",
     rating: 4.5,
     description: "Fresh organic tomatoes grown without pesticides"
@@ -56,6 +64,7 @@ const sampleProducts: Product[] = [
     quantity: "50 kg",
     image: "/api/placeholder/300/200",
     farmer: "Priya Singh",
+    farmerAddress: "0x8ba1f109551bD432803012645Hac136c4c8e4d8b7",
     location: "Punjab, India",
     rating: 4.8,
     description: "Premium quality basmati rice, aged for 2 years"
@@ -67,6 +76,7 @@ const sampleProducts: Product[] = [
     quantity: "200 kg",
     image: "/api/placeholder/300/200",
     farmer: "Ravi Kumar",
+    farmerAddress: "0x9ca2f209661cE543904123756Ibd247d5d9e5e9c8",
     location: "Maharashtra, India",
     rating: 4.2,
     description: "Red onions, freshly harvested"
@@ -78,6 +88,7 @@ const sampleProducts: Product[] = [
     quantity: "150 kg",
     image: "/api/placeholder/300/200",
     farmer: "Amit Sharma",
+    farmerAddress: "0x0db3f309771dF654015234867Jce358e6e0f6f0d9",
     location: "Haryana, India",
     rating: 4.6,
     description: "Organic wheat flour, stone ground"
@@ -89,6 +100,7 @@ const sampleProducts: Product[] = [
     quantity: "300 kg",
     image: "/api/placeholder/300/200",
     farmer: "Sunita Devi",
+    farmerAddress: "0x1ec4f409881eG765126345978Kdf469f7f1g7g1ea",
     location: "Uttar Pradesh, India",
     rating: 4.3,
     description: "Fresh potatoes, perfect for cooking"
@@ -100,6 +112,7 @@ const sampleProducts: Product[] = [
     quantity: "25 kg",
     image: "/api/placeholder/300/200",
     farmer: "Rajesh Patel",
+    farmerAddress: "0x2fd5f509991fH876237456089Leg570g8g2h8h2fb",
     location: "Gujarat, India",
     rating: 4.7,
     description: "Spicy green chilies, organically grown"
@@ -224,9 +237,11 @@ const ContactFarmerModal: React.FC<ContactFarmerModalProps> = ({ farmer, product
 };
 
 // Product Details Component
-const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack, onHome }) => {
+const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack, onHome, web3, account }) => {
   const [quantity, setQuantity] = useState<number>(1);
   const [showContactModal, setShowContactModal] = useState<boolean>(false);
+  const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -266,6 +281,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack, onHome
                   <div>
                     <p className="font-semibold">{product.farmer}</p>
                     <p className="text-sm text-gray-600">Farmer</p>
+                    <p className="text-xs text-gray-500">
+                      Wallet: {product.farmerAddress.slice(0, 6)}...{product.farmerAddress.slice(-4)}
+                    </p>
                   </div>
                 </div>
                 
@@ -299,9 +317,19 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack, onHome
                 </div>
                 
                 <div className="space-y-3">
-                  <button className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold">
-                    Buy Now
-                  </button>
+                  {purchaseSuccess ? (
+                    <div className="w-full bg-green-100 text-green-800 py-3 px-6 rounded-lg text-center font-semibold">
+                      ✅ Purchase Successful! TX: {purchaseSuccess.slice(0, 10)}...
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setShowBuyModal(true)}
+                      disabled={!web3 || !account}
+                      className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {!web3 || !account ? 'Connect Wallet to Buy' : 'Buy Now'}
+                    </button>
+                  )}
                   <button 
                     onClick={() => setShowContactModal(true)}
                     className="w-full border border-green-600 text-green-600 py-3 px-6 rounded-lg hover:bg-green-50 transition-colors"
@@ -323,14 +351,53 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack, onHome
           onClose={() => setShowContactModal(false)} 
         />
       )}
+
+      {/* Buy Confirmation Modal */}
+      {showBuyModal && web3 && account && (
+        <BuyConfirmationModal
+          product={product}
+          quantity={quantity}
+          onClose={() => setShowBuyModal(false)}
+          onPurchaseSuccess={(txHash) => {
+            setPurchaseSuccess(txHash);
+            setShowBuyModal(false);
+          }}
+          web3={web3}
+          account={account}
+        />
+      )}
     </div>
   );
 };
 
 // Main BuyPage Component
-const BuyPage: React.FC<BuyPageProps> = ({ onNavigateHome }) => {
+const BuyPage: React.FC<BuyPageProps> = ({ onNavigateHome, web3, account }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [products] = useState<Product[]>(sampleProducts);
+  const [products, setProducts] = useState<Product[]>(sampleProducts);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('marketplace_listings');
+      const parsed: any[] = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const mapped: Product[] = parsed.map((p: any, idx: number) => ({
+          id: p.id ?? Date.now() + idx,
+          name: p.name,
+          price: Number(p.price),
+          quantity: p.quantity,
+          image: p.image,
+          farmer: p.farmer,
+          farmerAddress: p.farmerAddress || '0x0000000000000000000000000000000000000000',
+          location: p.location,
+          rating: Number(p.rating || 4.5),
+          description: p.description
+        }));
+        setProducts(prev => [...mapped, ...prev]);
+      }
+    } catch (e) {
+      console.error('Failed to load listings', e);
+    }
+  }, []);
 
   if (selectedProduct) {
     return (
@@ -338,6 +405,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onNavigateHome }) => {
         product={selectedProduct} 
         onBack={() => setSelectedProduct(null)}
         onHome={onNavigateHome}
+        web3={web3}
+        account={account}
       />
     );
   }

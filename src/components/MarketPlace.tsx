@@ -1,14 +1,29 @@
 import React from 'react';
-import { ShoppingCart, Package } from 'lucide-react';
+import { ShoppingCart, Package, Wallet } from 'lucide-react';
+import { WalletConnection } from './WalletConnection';
+import Web3 from 'web3';
 
 interface MarketPlaceProps {
   onNavigate: (page: 'buy' | 'sell') => void;
+  web3?: Web3 | null;
+  account?: string | null;
+  onWalletConnected?: (account: string, web3: Web3) => void;
+  onDisconnect?: () => void;
 }
 
-const MarketPlace: React.FC<MarketPlaceProps> = ({ onNavigate }) => {
+const MarketPlace: React.FC<MarketPlaceProps> = ({ onNavigate, web3, account, onWalletConnected, onDisconnect }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center p-4">
       <div className="max-w-4xl mx-auto text-center">
+        {/* Wallet Connection Status */}
+        <div className="mb-8">
+          <WalletConnection 
+            onWalletConnected={onWalletConnected || (() => {})}
+            account={account}
+            onDisconnect={onDisconnect}
+          />
+        </div>
+        
         <div className="mb-12">
           <h1 className="text-5xl font-bold text-white mb-4">
             🌾 Farmer Marketplace

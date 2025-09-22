@@ -12,7 +12,7 @@ interface FormData {
   description: string;
   farmer: string;
   location: string;
-  image: File | null;
+  images: File[];
 }
 
 const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
@@ -23,7 +23,7 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
     description: '',
     farmer: '',
     location: '',
-    image: null
+    images: []
   });
   const [dragActive, setDragActive] = useState<boolean>(false);
 
@@ -49,19 +49,21 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
     e.stopPropagation();
     setDragActive(false);
     
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
       setFormData({
         ...formData,
-        image: e.dataTransfer.files[0]
+        images: [...formData.images, ...files]
       });
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
       setFormData({
         ...formData,
-        image: e.target.files[0]
+        images: [...formData.images, ...files]
       });
     }
   };
@@ -72,9 +74,32 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
       return;
     }
 
-    // Here you would typically send the data to your backend
-    console.log('Product data:', formData);
-    alert('Product listed successfully!');
+    // Build a product record to persist
+    const imageUrls = formData.images.map(f => URL.createObjectURL(f));
+    const newListing = {
+      id: Date.now(),
+      name: formData.name,
+      price: Number(formData.price),
+      quantity: formData.quantity,
+      image: imageUrls[0] || '',
+      images: imageUrls,
+      farmer: formData.farmer,
+      farmerAddress: '0x0000000000000000000000000000000000000000',
+      location: formData.location,
+      rating: 4.5,
+      description: formData.description
+    };
+
+    try {
+      const existing = localStorage.getItem('marketplace_listings');
+      const listings = existing ? JSON.parse(existing) : [];
+      listings.push(newListing);
+      localStorage.setItem('marketplace_listings', JSON.stringify(listings));
+      alert('Product listed successfully!');
+    } catch (e) {
+      console.error('Failed to save listing', e);
+      alert('Failed to save listing');
+    }
     
     // Reset form
     setFormData({
@@ -84,8 +109,14 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
       description: '',
       farmer: '',
       location: '',
-      image: null
+      images: []
     });
+
+    // Navigate user to buy page via home → marketplace → buy flow
+    // Since this app uses internal page state, we signal by calling home; user can then choose Buy
+    // If App adds a direct navigate function later, we can call it here
+    const event = new CustomEvent('navigate_to_buy');
+    window.dispatchEvent(event);
   };
 
   return (
@@ -113,7 +144,7 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
           {/* Image Upload */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Product Image
+              Product Images (you can add multiple)
             </label>
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -126,11 +157,12 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
             >
               <Upload className="mx-auto mb-4 text-gray-400" size={48} />
               <p className="text-gray-600 mb-2">
-                {formData.image ? formData.image.name : 'Drag and drop your image here, or click to select'}
+                {formData.images.length > 0 ? `${formData.images.length} image(s) selected` : 'Drag and drop images here, or click to select'}
               </p>
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleFileSelect}
                 className="hidden"
                 id="imageUpload"
@@ -141,6 +173,15 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateHome }) => {
               >
                 Choose File
               </label>
+              {formData.images.length > 0 && (
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {formData.images.slice(0, 6).map((file, idx) => (
+                    <div key={idx} className="w-full h-20 bg-gray-100 rounded overflow-hidden flex items-center justify-center text-xs text-gray-600 px-1">
+                      {file.name}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

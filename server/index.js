@@ -19,7 +19,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:7545';
-const RELAYER_PRIVATE_KEY = process.env.RELAYER_PRIVATE_KEY || '0x18e4eaee6a2a83c2b0d24ac8564f1233440b92fd96e02a80389cfe7d6edff493';
+const RELAYER_PRIVATE_KEY = process.env.RELAYER_PRIVATE_KEY || '0xde232e8c8aa6cbe6db07c8b1267351928ec7c63de76e3614d04730225cffd4a8';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || process.env.VITE_CONTRACT_ADDRESS || '';
 
 // Middleware
@@ -230,6 +230,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
         confidence: 0.75
       };
     }
+
 
     // Store in database
     await pool.query(

@@ -51,15 +51,34 @@ function App() {
     setCurrentPage('marketplace');
   };
 
+  React.useEffect(() => {
+    const onNavigateToBuy = () => {
+      setCurrentPage('buy');
+    };
+    window.addEventListener('navigate_to_buy', onNavigateToBuy);
+    return () => window.removeEventListener('navigate_to_buy', onNavigateToBuy);
+  }, []);
+
   // Render current page
   const renderCurrentPage = () => {
     switch(currentPage) {
       case 'cropadvisor':
         return renderCropAdvisor();
       case 'marketplace':
-        return <MarketPlace onNavigate={(page: 'buy' | 'sell') => setCurrentPage(page)} />;
+        return <MarketPlace 
+          onNavigate={(page: 'buy' | 'sell') => setCurrentPage(page)} 
+          web3={web3}
+          account={account}
+          onWalletConnected={handleWalletConnected}
+          onDisconnect={() => {
+            setAccount(null);
+            setWeb3(null);
+            setSelectedImage(null);
+            setAnalysisId(null);
+          }}
+        />;
       case 'buy':
-        return <BuyPage onNavigateHome={handleNavigateHome} />;
+        return <BuyPage onNavigateHome={handleNavigateHome} web3={web3} account={account} />;
       case 'sell':
         return <SellPage onNavigateHome={handleNavigateHome} />;
       default:
@@ -93,6 +112,22 @@ function App() {
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
                   >
                     ← Back to CropAdvisor
+                  </button>
+                )}
+
+                {/* Back to Home Button - only show when wallet is connected */}
+                {account && currentPage === 'cropadvisor' && (
+                  <button
+                    onClick={() => {
+                      setAccount(null);
+                      setWeb3(null);
+                      setSelectedImage(null);
+                      setAnalysisId(null);
+                      setCurrentPage('cropadvisor');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    ← Back to Home
                   </button>
                 )}
 

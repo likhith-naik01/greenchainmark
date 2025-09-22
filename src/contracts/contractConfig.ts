@@ -1,5 +1,5 @@
 export const cropAdvisorAddress =
-  (import.meta as any).env?.VITE_CONTRACT_ADDRESS || "0x..."; // set via .env or replace after deploy
+  (import.meta as any).env?.VITE_CONTRACT_ADDRESS || "0xFc9119a97d226bd1C56C82292Ed8df3c2f01E8B8"; // Deployed contract address
 
 export const cropAdvisorABI = [
   {
@@ -68,6 +68,37 @@ export const cropAdvisorABI = [
       }
     ],
     "name": "PriceUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "farmer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "productName",
+        "type": "string"
+      }
+    ],
+    "name": "ProductPurchased",
     "type": "event"
   },
   {
@@ -320,6 +351,24 @@ export const cropAdvisorABI = [
     "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_farmer",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_productName",
+        "type": "string"
+      }
+    ],
+    "name": "purchaseProduct",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   }
 ] as const;

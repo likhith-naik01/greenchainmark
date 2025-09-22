@@ -21,6 +21,7 @@ contract CropAdvisor {
     event PaymentReceived(address indexed farmer, uint256 indexed analysisId, uint256 amount);
     event AnalysisCompleted(uint256 indexed analysisId, string diagnosis, string advice);
     event PriceUpdated(uint256 newPrice);
+    event ProductPurchased(address indexed buyer, address indexed farmer, uint256 amount, string productName);
     
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -94,5 +95,15 @@ contract CropAdvisor {
     
     function getContractBalance() external view returns (uint256) {
         return address(this).balance;
+    }
+    
+    function purchaseProduct(address _farmer, string memory _productName) external payable {
+        require(_farmer != address(0), "Invalid farmer address");
+        require(msg.value > 0, "Payment amount must be greater than 0");
+        
+        // Transfer payment directly to farmer
+        payable(_farmer).transfer(msg.value);
+        
+        emit ProductPurchased(msg.sender, _farmer, msg.value, _productName);
     }
 }
